@@ -1,43 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Boards from "./components/Boards";
+import Header from "./components/Header";
 import Home from "./components/Home";
-import { messageService } from "./service/messageService";
+import useInterval from "./hooks/useInterval";
+import { gameService } from "./service/gameService";
+import { gameInfoType } from "./types";
 
+const initialGameInfo = {
+  time: 15,
+  point: 0,
+  stage: 1
+};
 function App() {
-  const [messages, setMessages] = useState<{ text: string }[] | undefined>(
-    undefined
-  );
+  const [{ stage, time, point }, setGameInfo] =
+    useState<gameInfoType>(initialGameInfo);
 
   useEffect(() => {
-    // subscribe to home component messages
-    const subscription = messageService.onMessage().subscribe(message => {
-      if (message) {
-        // add message to local state if not empty
-        setMessages(messages => messages && [...messages, message]);
-      } else {
-        // clear messages when empty message received
-        setMessages([]);
-      }
+    const subscription = gameService.onService().subscribe(gameInfo => {
+      setGameInfo({ ...gameInfo });
     });
 
-    // return unsubscribe method to execute when component unmounts
     return () => subscription.unsubscribe();
   }, []);
 
+  useInterval(() => {
+    gameService.deletTime({ stage, point, time });
+  }, 1000);
+
+  useEffect(() => {
+    gameService.pullGameInfo({ time, point, stage });
+  }, [time, point, stage]);
+
+  useEffect(() => {
+    if (time <= 0) {
+      gameService.reset();
+    }
+  }, [time]);
+
   return (
-    <div className="jumbotron">
-      <div className="container text-center">
-        <div className="row">
-          <div className="col-sm-8 offset-sm-2">
-            {messages?.map((message, index) => (
-              <div key={index} className="alert alert-success">
-                {message.text}
-              </div>
-            ))}
-            <Home />
-          </div>
-        </div>
-      </div>
-    </div>
+    <main>
+      <Header>
+        스테이지: {stage}, 남은 시간: {time}, 점수: {point}
+      </Header>
+      <Boards />
+    </main>
   );
 }
 

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack serve --mode development --open",
-    "prebuild": "rimraf dist \n rimraf simple",
+    "prebuild": "rimraf dist",
     "build": "webpack --progress --mode production"
   },
   "keywords": [],
